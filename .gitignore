@@ -1,0 +1,29 @@
+.env
+.env.*
+!.env.tpl
+*.secret
+*.key
+secrets/
+credentials.json
+__pycache__/
+*.pyc
+.venv/
+node_modules/
+.codegraph/
+.worktrees/
+volumes/
+.DS_Store
+
+# OMC runtime state — ephemeral per session, not for version control
+.omc/
+.omx/
+.omo/
+
+# Lane α: DATA_ROOT moved to in-repo host dir (Text-only Storage Policy);
+# bind-mount targets are runtime artifacts, never versioned.
+data/
+
+# One-shot lane operation prompts — disposable per-session work briefs.
+# Glob matches singular "-prompt.md" across any phase; preserves canonical
+# docs/phase-N-worker-prompts.md (plural "prompts.md") which IS versioned.
+docs/phase-*-prompt.md
