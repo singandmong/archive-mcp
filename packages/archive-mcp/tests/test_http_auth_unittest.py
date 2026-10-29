@@ -63,7 +63,9 @@ class HttpAuthTests(unittest.TestCase):
                          "/test/docling", "/test/crawl", "/test/cognee", "/test/notebooklm/quiz"):
                 self.assertEqual(self.client.post(path, json={}).status_code, 401)
                 self.assertEqual(self.client.post(path, json={}, headers={"Authorization": "Bearer wrong"}).status_code, 401)
-            self.assertEqual(self.client.get("/tools", headers={"Authorization": "Bearer " + token}).status_code, 200)
+            tools = self.client.get("/tools", headers={"Authorization": "Bearer " + token})
+            self.assertEqual(tools.status_code, 200)
+            self.assertEqual(tools.json()["tools"], ["save_link", "search_archive", "archive_status"])
             self.assertEqual(self.client.post("/test/docling", json={"file": "/etc/passwd"}, headers={"Authorization": "Bearer " + token}).status_code, 404)
             with patch.dict("os.environ", {"ARCHIVE_MCP_ENABLE_TEST_ENDPOINTS": "1"}):
                 self.assertEqual(self.client.post("/test/crawl", json={"url": "http://127.0.0.1"}, headers={"Authorization": "Bearer " + token}).status_code, 404)

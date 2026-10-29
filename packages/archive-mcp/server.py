@@ -35,9 +35,6 @@ from jobs.capture import CaptureRequest, capture_link, save_source_content
 from jobs.archive_paths import archive_root
 from jobs.link_extract import fetch_public_content
 from jobs.wiqi_item_writer import WiqiItemRequest, WiqiItemWriter
-from tools import archive as archive_tools
-from tools import digest as digest_tools
-from tools import rag as rag_tools
 
 logger = logging.getLogger("archive-mcp")
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
@@ -75,29 +72,8 @@ async def require_http_token(request: Request, call_next):
 
 
 # --- Wrapper boot ----------------------------------------------------------
-# Each wrapper is optional at boot. A wrapper backend that fails to import
-# (missing OS library, deferred dep) leaves a `None` entry in the registry;
-# the corresponding /test endpoint returns HTTP 503 until the wrapper lands.
+# Prototype wrappers are intentionally not distributed with the public package.
 WRAPPER_REGISTRY: dict[str, Any] = {}
-
-for _name in ("cognee", "notebooklm", "crawl4ai", "docling", "whisper", "opencli"):
-    try:
-        module = __import__(f"wrappers.{_name}", fromlist=["*"])
-        cls_name = "".join(p.capitalize() for p in _name.split("_")) + "Wrapper"
-        # Special-case capitalization for known wrappers.
-        cls_name_overrides = {
-            "cognee": "CogneeWrapper",
-            "notebooklm": "NotebookLMWrapper",
-            "crawl4ai": "Crawl4AIWrapper",
-            "docling": "DoclingWrapper",
-            "whisper": "WhisperWrapper",
-            "opencli": "OpenCLIWrapper",
-        }
-        cls = getattr(module, cls_name_overrides.get(_name, cls_name), None)
-        WRAPPER_REGISTRY[_name] = cls() if cls is not None else None
-    except Exception as exc:  # noqa: BLE001 — boot must not fail on wrapper errors
-        logger.warning("wrapper %s unavailable at boot: %s", _name, exc)
-        WRAPPER_REGISTRY[_name] = None
 
 
 # --- Health & introspection ------------------------------------------------
@@ -109,18 +85,8 @@ def health() -> dict[str, str]:
 
 @app.get("/tools")
 def list_tools() -> dict[str, list[str]]:
-    """Return the MCP tool ids exposed by this server.
-
-    The list is the union of archive/rag/digest tool registries. Order is
-    stable (insertion order in each module's TOOLS list).
-    """
-    return {
-        "tools": [
-            *archive_tools.TOOLS,
-            *rag_tools.TOOLS,
-            *digest_tools.TOOLS,
-        ]
-    }
+    """Return the tools available through the local stdio MCP interface."""
+    return {"tools": ["save_link", "search_archive", "archive_status"]}
 
 
 @app.get("/wrappers")
